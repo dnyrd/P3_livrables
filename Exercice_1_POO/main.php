@@ -1,77 +1,63 @@
 <?php
 
 require_once "dbconnect.php";
+require_once "contact.php";
 require_once "contactmanager.php";
-
-
-
+require_once "command.php";
 
 /* ==========================
    APPLICATION CLI
    ========================== */
-class Application
-{
-    private ContactManager $contactManager;
 
-    public function __construct()
-    {
-        $this->contactManager = new ContactManager();
+echo "=== Application CLI Contacts ===\n";
+echo "Commandes disponibles :\n";
+echo " aide\n";
+echo " list\n";
+echo " detail {id}\n";
+echo " create {name}, {email}, {phone number} \n";
+echo " delete {id}\n";
+echo " quitter\n\n";
+
+$command = new Command();
+
+while (true) {
+    $input = trim(readline('> '));
+
+    if ($input === 'quitter') {
+        echo "👋 Au revoir\n";
+        exit;
     }
 
-    public function run(): void
-    {
-        echo "=== Application CLI Contacts ===\n";
-        echo "Commandes : aide, lister, supprimer, quitter\n\n";
-
-        while (true) {
-            $commande = strtolower(trim(readline('> ')));
-
-            switch ($commande) {
-                case 'aide':
-                    $this->aide();
-                    break;
-
-                case 'lister':
-                    $this->listerContacts();
-                    break;
-                
-                case 'supprimer':
-                    $this->listerContacts();
-                    exit;
-
-                case 'quitter':
-                    echo "👋 Au revoir\n";
-                    exit;
-
-                default:
-                    echo "❌ Commande inconnue\n";
-            }
-        }
-    }
-
-    private function aide(): void
-    {
+    if ($input === 'aide') {
         echo "\nCommandes disponibles :\n";
-        echo " aide      → afficher les commandes d'aide\n";
-        echo " lister    → afficher tous les contacts\n";
-        echo " supprimer → supprimer les contacts\n";
-        echo " quitter   → quitter l’application\n\n";
+        echo " aide                                    → afficher l'aide\n";
+        echo " list                                    → afficher tous les contacts\n";
+        echo " detail {id}                             → afficher un contact\n";
+        echo " create {name}, {email}, {phone number}  → créer un contact\n";
+        echo " delete {id}                             → supprimer un contact\n";
+        echo " quitter                                 → quitter l’application\n\n";
+        continue;
     }
 
-    private function listerContacts(): void
-    {
-        $contacts = $this->contactManager->findAll();
-
-        echo "📇 Liste des contacts :\n";
-        foreach ($contacts as $contact) {
-            echo "- {$contact['id']} | {$contact['name']} | {$contact['email']}\n";
-        }
-        echo "\n";
+    if ($input === 'list') {
+        $command->list();
+        continue;
     }
+
+    if (preg_match('/^detail\s+(\d+)$/', $input, $matches)) {
+        $command->detail((int)$matches[1]);
+        continue;
+    }
+
+    if (preg_match('/^create (.*), (.*), (.*)$/', $input, $matches)) {
+        $command->create((string)$matches[1],(string)$matches[2], (string)$matches[3]);
+        continue;
+    }
+
+    if (preg_match('/^delete\s+(\d+)$/', $input, $matches)) {
+        $command->delete((int)$matches[1]);
+        continue;
+    }
+
+    echo "❌ Commande inconnue. Tapez 'aide' pour voir les commandes.\n";
 }
-
-/* ==========================
-   LANCEMENT
-   ========================== */
-$app = new Application();
-$app->run();
